@@ -1,5 +1,5 @@
 object FF: TFF
-  Left = 2349
+  Left = 429
   Top = 232
   Width = 687
   Height = 400

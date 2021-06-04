@@ -11,7 +11,9 @@
 #include <Dialogs.hpp>
 #include <ScktComp.hpp>
 //---------------------------------------------------------------------------
+#include <ExtCtrls.hpp>
 #include "Hotel.h"
+#include "Enseignement.h"
 #include "ChambreFumeur.h"
 #include "ChambreNonFumeur.h"
 #include <ExtCtrls.hpp>
@@ -22,6 +24,7 @@
 #include "TimeStamp.h"
 #include "ihmFille.h"
 #include "BDD_Exploitation.h"
+#include "Bureaux.h"
 #include <time.h>
 //---------------------------------------------------------------------------
 #include <stdio.h>
@@ -56,6 +59,7 @@ __published:	// Composants gérés par l'EDI
     TMenuItem *ConnectAutomate;
     TMenuItem *ConnecterBDD;
         TMenuItem *ConnexionMoteur;
+    TOpenDialog *OpenDialog;
     void __fastcall Quitter1Click(TObject *Sender);
     void __fastcall ClientSocketHygrometrieRead(TObject *Sender,
     TCustomWinSocket *Socket);
@@ -63,7 +67,6 @@ __published:	// Composants gérés par l'EDI
     void __fastcall ServerSocketClientRead(TObject *Sender,
     TCustomWinSocket *Socket);
     void __fastcall FormClose(TObject *Sender, TCloseAction &Action);
-    void __fastcall ChargerFichierConfiguration1Click(TObject *Sender);
     void __fastcall Cascade1Click(TObject *Sender);
     void __fastcall Mosaique1Click(TObject *Sender);
     void __fastcall FormResize(TObject *Sender);
@@ -77,6 +80,7 @@ __published:	// Composants gérés par l'EDI
           int &ErrorCode);
     void __fastcall ConnecterBDDClick(TObject *Sender);
         void __fastcall ConnexionMoteurClick(TObject *Sender);
+    void __fastcall ChargerFichierConfiguration1Click(TObject *Sender);
 private:	// Déclarations utilisateur
     FILE* pFile;
     Hotel* m_Hotel;
@@ -87,6 +91,7 @@ private:	// Déclarations utilisateur
     MotorisationVMC* m_MotorisationVMC;
     DonneesExploitationParZone* m_DonneesExploitationParZone[22];
     TFF* FF[22];
+    AnsiString fichierConfiguration;
     int localType; // 0 Hotel / 1 Bureaux / 2 Enseignement
     int donneesHygrometrie[22];
     plageDeFonctionnement* m_PlageDeFonctionnement[22];
@@ -102,6 +107,7 @@ private:	// Déclarations utilisateur
     char adressePremierMot;
     int nbrCapteursHygrometrie;
     int adressePremierMotAutomate;
+    void chargerFichierConfiguration();
     void getDonneesHygrometrie(int pnombreZones);
     void setDonneesExploitationParZones();
     void updateDonnees();
@@ -110,6 +116,8 @@ private:	// Déclarations utilisateur
     void recupererVolumeZones();
     void lireFichierConfigInitialisation();
     void lireFichierConfigHotel();
+    void lireFichierConfigBureau();
+    void lireFichierConfigEnseignement();
     static unsigned char lireTrameRequete(char* trame);
     static void ecrireTrameReponse(char* buffer, DonneesExploitationParZone* donnees[], TimeStamp* ts, int nbrZones, unsigned char clientIdentifier);
     bool estDansPlageFonctionnement(int zoneId);

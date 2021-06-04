@@ -3,11 +3,11 @@
 #include <vcl.h>
 #pragma hdrstop
 
-#include "ihm.h"
-
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma resource "*.dfm"
+
+#include "ihm.h"
 
 TFP *FP;
 extern MotorisationVMC hMotorisationVMC;
@@ -170,7 +170,12 @@ float flag = 0;
 void TFP::recupererDonneesDm1() {
 for (int i = 0; i < nbrZones; i++)
     {
-    dm1[i] = m_Hotel->m_ZoneHotel[i]->getDm1();
+    if (localType == 0)
+        dm1[i] = m_Hotel->m_ZoneHotel[i]->getDm1();
+    else if (localType == 1)
+        dm1[i] = m_Bureaux->m_ZoneBureaux[i]->getDm1();
+    else if (localType == 2)
+        dm1[i] = m_Enseignement->m_ZoneEnseignement[i]->getDm1();
     }
 }
 
@@ -181,13 +186,36 @@ void TFP::setDonneesExploitationParZones()
 int cpt = 0;
 while (cpt < nbrZones)
     {
-    m_DonneesExploitationParZone[cpt]->setVolumeZone(m_Hotel->m_ZoneHotel[cpt]->getVolumeZone());
-    m_DonneesExploitationParZone[cpt]->setLocalType(m_Hotel->getLocalType());
-    m_DonneesExploitationParZone[cpt]->setZoneId(cpt);
-    m_DonneesExploitationParZone[cpt]->setZoneType(m_Hotel->m_ZoneHotel[cpt]->getZoneType());
-    m_DonneesExploitationParZone[cpt]->setHygrometrie(donneesHygrometrie[cpt]);
-    m_DonneesExploitationParZone[cpt]->setTimeStampId(m_TimeStamp->getTimeStampId());
-    m_DonneesExploitationParZone[cpt]->setDebitAirExtrait(dm2[cpt]);
+    if (localType == 0)
+        {
+        m_DonneesExploitationParZone[cpt]->setVolumeZone(m_Hotel->m_ZoneHotel[cpt]->getVolumeZone());
+        m_DonneesExploitationParZone[cpt]->setLocalType(m_Hotel->getLocalType());
+        m_DonneesExploitationParZone[cpt]->setZoneId(cpt);
+        m_DonneesExploitationParZone[cpt]->setZoneType(m_Hotel->m_ZoneHotel[cpt]->getZoneType());
+        m_DonneesExploitationParZone[cpt]->setHygrometrie(donneesHygrometrie[cpt]);
+        m_DonneesExploitationParZone[cpt]->setTimeStampId(m_TimeStamp->getTimeStampId());
+        m_DonneesExploitationParZone[cpt]->setDebitAirExtrait(dm2[cpt]);
+        }
+    else if (localType == 1)
+        {
+        m_DonneesExploitationParZone[cpt]->setVolumeZone(m_Bureaux->m_ZoneBureaux[cpt]->getVolumeZone());
+        m_DonneesExploitationParZone[cpt]->setLocalType(m_Bureaux->getLocalType());
+        m_DonneesExploitationParZone[cpt]->setZoneId(cpt);
+        m_DonneesExploitationParZone[cpt]->setZoneType(m_Bureaux->m_ZoneBureaux[cpt]->getZoneType());
+        m_DonneesExploitationParZone[cpt]->setHygrometrie(donneesHygrometrie[cpt]);
+        m_DonneesExploitationParZone[cpt]->setTimeStampId(m_TimeStamp->getTimeStampId());
+        m_DonneesExploitationParZone[cpt]->setDebitAirExtrait(dm2[cpt]);
+        }
+    else if (localType == 2)
+        {
+        m_DonneesExploitationParZone[cpt]->setVolumeZone(m_Enseignement->m_ZoneEnseignement[cpt]->getVolumeZone());
+        m_DonneesExploitationParZone[cpt]->setLocalType(m_Enseignement->getLocalType());
+        m_DonneesExploitationParZone[cpt]->setZoneId(cpt);
+        m_DonneesExploitationParZone[cpt]->setZoneType(m_Enseignement->m_ZoneEnseignement[cpt]->getZoneType());
+        m_DonneesExploitationParZone[cpt]->setHygrometrie(donneesHygrometrie[cpt]);
+        m_DonneesExploitationParZone[cpt]->setTimeStampId(m_TimeStamp->getTimeStampId());
+        m_DonneesExploitationParZone[cpt]->setDebitAirExtrait(dm2[cpt]);
+        }
     cpt++;
     }
 }
@@ -244,6 +272,13 @@ if (ConnexionMoteur->Tag == 1)
 
 if (Tag == 1)
     {
+    /*if (localType == 0)
+        delete m_Hotel;
+    else if (localType == 1)
+        delete m_Bureaux;
+    else if (localType == 2)
+        delete m_Enseignement;  */
+
     delete [] m_DonneesExploitationParZone;
     delete m_TimeStamp;
     delete [] FF;
@@ -302,14 +337,14 @@ void TFP::ecrireTrameReponse(char * buffer, DonneesExploitationParZone* donnees[
     // ecriture de n objets DonneesExploitationParZone de facon sérialisée
     while (i < nbrZones)
         {
-        sprintf(buffer + 3 + (sizeof(DonneesExploitationParZone) * i), "%d %d %d %d %f %f %d",
+        sprintf(buffer + 3 + (sizeof(DonneesExploitationParZone) * i), "%d %d %d %d %f %f %f",
             donnees[i]->getZoneType(),
             donnees[i]->getZoneId(),
             donnees[i]->getLocalType(),
             ts->getTimeStampId(),
             donnees[i]->getVolumeZone(),
             donnees[i]->getHygrometrie(),
-            (int)donnees[i]->getDebitAirExtrait()
+            donnees[i]->getDebitAirExtrait()
             );
         i++;
         }
@@ -331,6 +366,7 @@ void TFP::lireFichierConfigInitialisation()
         {
         int i = -1;
         int flag = 0;
+        char flag2 = 0;
         char buffer[64];
         memset(buffer, '\0', 64);
         FILE* pFile = fopen("config.ini", "r");
@@ -463,6 +499,7 @@ void TFP::lireFichierConfigInitialisation()
                         }
                     buffer[i] = '\0';
                     memcpy(idServerBDD, buffer, strlen(buffer));
+
                     memset(buffer, '\0', 64);
                     }
                 else
@@ -487,6 +524,10 @@ void TFP::lireFichierConfigInitialisation()
                         buffer[i] = fgetc(pFile);
                         }
                     buffer[i] = '\0';
+                    strrev(buffer);
+
+                    buffer[strlen(buffer)-2] = '\0';
+
                     memcpy(passwordServerBdd, buffer, strlen(buffer));
                     }
                 else
@@ -505,50 +546,15 @@ void TFP::lireFichierConfigInitialisation()
 
 void __fastcall TFP::ChargerFichierConfiguration1Click(TObject *Sender)
 {
-if (Tag == 0)
+bool fichierSelectionne = OpenDialog->Execute();
+if (fichierSelectionne)
     {
-    int i;
-    unsigned char heureFonctionnement[4];
-    int flag;
-    bool jourDeFonctionnement[7];
-
-    lireFichierConfigHotel();
-
-    i = nbrZones - 1;
-
-    while (i >= 0)
-        {
-        heureFonctionnement[0] = m_PlageDeFonctionnement[i]->getTmHeureDebut();
-        heureFonctionnement[1] = m_PlageDeFonctionnement[i]->getTmMinuteDebut();
-        heureFonctionnement[2] = m_PlageDeFonctionnement[i]->getTmHeureFin();
-        heureFonctionnement[3] = m_PlageDeFonctionnement[i]->getTmMinuteFin();
-
-        for (int j = 0; j < 7; j++)
-            jourDeFonctionnement[j] = m_PlageDeFonctionnement[i]->estJourDeFonctionnement(j);
-
-        FF[i] = new TFF(this, i, m_Hotel->m_ZoneHotel[i]->getVolumeZone(),m_Hotel->m_ZoneHotel[i]->getZoneType(), heureFonctionnement, jourDeFonctionnement);
-        i--;
-        }
-
-    recupererDonneesDm1();
-
-    Affichage1->Enabled = true;
-    Tile();
-
-    for (int i = 0; i < nbrZones; i++)
-        {
-        FF[i]->Caption = "Zone n°" + AnsiString(i);
-        m_DonneesExploitationParZone[i] = new DonneesExploitationParZone;
-        }
-
-    if (ClientSocketHygrometrie->Tag == 1)
-        {
-        Timer->Enabled = true;
-        getDonneesHygrometrie(nbrZones);
-        }
+    fichierConfiguration = OpenDialog->FileName;
+    chargerFichierConfiguration();
     }
-    Tag = 1;
 }
+
+
 //---------------------------------------------------------------------------
 
 
@@ -578,6 +584,77 @@ if (Tag == 1) // Fichier config chargé
 }
 //---------------------------------------------------------------------------
 
+void TFP::chargerFichierConfiguration()
+{
+if (Tag == 0)
+    {
+    int i;
+    localType = -1;
+    unsigned char heureFonctionnement[4];
+    int flag;
+    bool jourDeFonctionnement[7];
+
+    pFile = fopen(fichierConfiguration.c_str(),"rb");
+    if (pFile != NULL)
+        {
+        fseek(pFile, 100, SEEK_SET); // Deplacer le pointeur apres les 100 octets rfid
+        fread(&localType,sizeof(int),1,pFile);
+
+        if (localType == 0)
+            lireFichierConfigHotel();
+        else if (localType == 1)
+            lireFichierConfigBureau();
+        else if (localType == 2)
+            lireFichierConfigEnseignement();
+
+        }
+    else
+        {
+        ShowMessage("Erreur fichier de configuration");
+        FP->Close();
+        }
+
+    i = nbrZones - 1;
+
+    while (i >= 0)
+        {
+        heureFonctionnement[0] = m_PlageDeFonctionnement[i]->getTmHeureDebut();
+        heureFonctionnement[1] = m_PlageDeFonctionnement[i]->getTmMinuteDebut();
+        heureFonctionnement[2] = m_PlageDeFonctionnement[i]->getTmHeureFin();
+        heureFonctionnement[3] = m_PlageDeFonctionnement[i]->getTmMinuteFin();
+
+        for (int j = 0; j < 7; j++)
+            jourDeFonctionnement[j] = m_PlageDeFonctionnement[i]->estJourDeFonctionnement(j);
+        if (localType == 0)
+            FF[i] = new TFF(this, i, m_Hotel->m_ZoneHotel[i]->getVolumeZone(),m_Hotel->m_ZoneHotel[i]->getZoneType(), heureFonctionnement, jourDeFonctionnement);
+        else if (localType == 1)
+            FF[i] = new TFF(this, i, m_Bureaux->m_ZoneBureaux[i]->getVolumeZone(),m_Bureaux->m_ZoneBureaux[i]->getZoneType(), heureFonctionnement, jourDeFonctionnement);
+        else if (localType == 2)
+            FF[i] = new TFF(this, i, m_Enseignement->m_ZoneEnseignement[i]->getVolumeZone(),m_Enseignement->m_ZoneEnseignement[i]->getZoneType(), heureFonctionnement, jourDeFonctionnement);
+
+        i--;
+        }
+
+    recupererDonneesDm1();
+
+    Affichage1->Enabled = true;
+    Tile();
+
+    for (int i = 0; i < nbrZones; i++)
+        {
+        FF[i]->Caption = "Zone n°" + AnsiString(i);
+        m_DonneesExploitationParZone[i] = new DonneesExploitationParZone;
+        }
+
+    if (ClientSocketHygrometrie->Tag == 1)
+        {
+        Timer->Enabled = true;
+        getDonneesHygrometrie(nbrZones);
+        }
+    }
+    Tag = 1;
+}
+
 void TFP::lireFichierConfigHotel()
 {
 ZoneHotel* hZoneHotel[21];
@@ -589,8 +666,6 @@ m_Hotel = new Hotel;
 
 int compteurCF=0,compteurCNF=0;
 int zoneType;
-localType = 0;
-int rfid;
 
 memset(hChFumeur, NULL, 10);
 memset(hChNonFumeur, NULL, 10);
@@ -598,11 +673,8 @@ memset(hZoneHotel, NULL, 21);
 memset(m_PlageDeFonctionnement, NULL, 21);
 hSalleRestauration = NULL;
 
-pFile = fopen("config.nzl","rb");
 if (pFile != NULL)
     {
-    fread(&rfid,sizeof(int),1,pFile);
-    fread(&localType,sizeof(int),1,pFile);
     fread(m_Hotel,sizeof(Hotel),1,pFile);
 
     nbrZones = m_Hotel->getNombreZones();
@@ -671,44 +743,211 @@ if (pFile != NULL)
     }
 else
     {
-    ShowMessage("Erreur fichier de configuration config.nzl");
+    ShowMessage("Erreur fichier de configuration");
     FP->Close();
     }
 }
 
 //---------------------------------------------------------------------------
 
-void __fastcall TFP::ClientSocketHygrometrieConnect(TObject *Sender,
-      TCustomWinSocket *Socket)
+void TFP::lireFichierConfigBureau()
 {
-ClientSocketHygrometrie->Tag = 1;
-if (Tag == 1)
-    Timer->Enabled = true;
-    
-ConnectAutomate->Caption = "Deconnexion Automate";
+ZoneBureaux* hZoneBureaux[11];
+Bureau* hBureau[10];
+SanitaireCollectifs* hSanitaireCollectifs;
+
+m_Bureaux = new Bureaux;
+
+int zoneType;
+int compteurBureau = 0;
+
+memset(hBureau, NULL, 10);
+memset(hZoneBureaux, NULL, 11);
+memset(m_PlageDeFonctionnement, NULL, 21);
+
+if (pFile != NULL)
+    {
+    fread(m_Bureaux,sizeof(Bureaux),1,pFile);
+
+    nbrZones = m_Bureaux->getNombreZones();
+
+    for(int compteur=0;compteur<nbrZones;compteur++)
+        {
+        hZoneBureaux[compteur] = new ZoneBureaux;
+        fread(hZoneBureaux[compteur],sizeof(ZoneBureaux),1,pFile);
+        }
+
+    for(int compteur=0;compteur<nbrZones;compteur++)
+        {
+        m_PlageDeFonctionnement[compteur] = new plageDeFonctionnement;
+        fread(m_PlageDeFonctionnement[compteur],sizeof(plageDeFonctionnement),1,pFile);
+        }
+
+    for (int compteur = 0; compteur < m_Bureaux->getNbrBureau(); compteur++)
+        hBureau[compteur] = new Bureau;
+
+
+    fclose(pFile);
+
+    for(int compteur=0;compteur<nbrZones;compteur++)
+        {
+        m_Bureaux->m_ZoneBureaux[compteur] = hZoneBureaux[compteur];
+
+        zoneType = m_Bureaux->m_ZoneBureaux[compteur]->getZoneType();
+
+        if(zoneType ==3)
+            {
+            for(int compteur2 = 0;compteur2<m_Bureaux->m_ZoneBureaux[compteur]->getNbrPiece();compteur2++)
+                {
+                m_Bureaux->m_ZoneBureaux[compteur]->m_Bureau[compteur2] = hBureau[compteurBureau];
+                compteurBureau++;
+                }
+            }
+        else if(zoneType ==4)
+            {
+            m_Bureaux->m_ZoneBureaux[compteur]->m_SanitaireCollectifs = hSanitaireCollectifs;
+            }
+        }
+    }
+else
+    {
+    ShowMessage("Erreur fichier de configuration");
+    FP->Close();
+    }
 }
+
 //---------------------------------------------------------------------------
 
-void __fastcall TFP::ClientSocketHygrometrieDisconnect(TObject *Sender,
-      TCustomWinSocket *Socket)
+void TFP::lireFichierConfigEnseignement()
 {
-ClientSocketHygrometrie->Tag = 0;
-Timer->Enabled = false;
-ConnectAutomate->Caption = "Activer Connexion Automate";
+ZoneEnseignement* hZoneEnseignement[22];
+SalleHebergement* hSalleHebergement;
+SalleEnseignementMPC* hSalleEnseignementMPC[10];
+SalleEnseignementLycee* hSalleEnseignementLycee[10];
+SalleRestauration* hSalleRestauration;
+
+m_Enseignement = new Enseignement;
+
+int zoneType;
+
+memset(hZoneEnseignement, NULL, 22);
+hSalleHebergement = NULL;
+memset(hSalleEnseignementMPC, NULL, 10);
+memset(hSalleEnseignementLycee, NULL, 10);
+
+if (pFile != NULL)
+    {
+    fread(m_Enseignement,sizeof(Enseignement),1,pFile);
+
+    nbrZones = m_Enseignement->getNombreZones();
+
+    for(int compteur=0;compteur<nbrZones;compteur++)
+        {
+        hZoneEnseignement[compteur] = new ZoneEnseignement;
+        fread(hZoneEnseignement[compteur],sizeof(ZoneEnseignement),1,pFile);
+        }
+
+    for(int compteur=0;compteur<nbrZones;compteur++)
+        {
+        m_PlageDeFonctionnement[compteur] = new plageDeFonctionnement;
+        fread(m_PlageDeFonctionnement[compteur],sizeof(plageDeFonctionnement),1,pFile);
+        }
+
+    for (int compteur = 0; compteur < m_Enseignement->getNbrSalleEnseignementMPC(); compteur++)
+        {
+        hSalleEnseignementMPC[compteur] = new SalleEnseignementMPC;
+        fread(hSalleEnseignementMPC[compteur],sizeof(SalleEnseignementMPC),1,pFile);
+        }
+    for (int compteur = 0; compteur < m_Enseignement->getNbrSalleEnseignementLycee(); compteur++)
+        {
+        hSalleEnseignementLycee[compteur] = new SalleEnseignementLycee;
+        fread(hSalleEnseignementLycee[compteur],sizeof(SalleEnseignementLycee),1,pFile);
+        }
+
+    if (m_Enseignement->getNbrSalleRestauration() == 1)
+        {
+        hSalleRestauration = new SalleRestauration;
+        fread(hSalleRestauration,sizeof(SalleRestauration),1,pFile);
+        }
+
+    if (m_Enseignement->getNbrSalleHebergement() == 1)
+        {
+        hSalleHebergement = new SalleHebergement;
+        fread(hSalleHebergement,sizeof(SalleHebergement),1,pFile);
+        }
+
+    fclose(pFile);
+
+    for(int compteur=0;compteur<nbrZones;compteur++)
+        {
+        m_Enseignement->m_ZoneEnseignement[compteur] = hZoneEnseignement[compteur];
+
+        zoneType = m_Enseignement->m_ZoneEnseignement[compteur]->getZoneType();
+
+        if(zoneType == 5)      // MPC
+            {
+            for(int compteurEnseignement = 0;compteurEnseignement<m_Enseignement->m_ZoneEnseignement[compteur]->getNbrPiece();compteurEnseignement++)
+                {
+                m_Enseignement->m_ZoneEnseignement[compteur]->m_SalleEnseignementMPC[compteurEnseignement] = hSalleEnseignementMPC[compteurEnseignement];
+                compteurEnseignement++;
+                }
+            }
+
+        else if(zoneType == 6) // Lycee
+            {
+            for(int compteurEnseignement = 0;compteurEnseignement<m_Enseignement->m_ZoneEnseignement[compteur]->getNbrPiece();compteurEnseignement++)
+                {
+                m_Enseignement->m_ZoneEnseignement[compteur]->m_SalleEnseignementLycee[compteurEnseignement] = hSalleEnseignementLycee[compteurEnseignement];
+                compteurEnseignement++;
+                }
+            }
+            
+        else if (zoneType == 7) // Hebergement
+            m_Enseignement->m_ZoneEnseignement[compteur]->m_SalleHebergement = hSalleHebergement;
+
+        else if (zoneType == 2) // Restauration
+            m_Enseignement->m_ZoneEnseignement[compteur]->m_SalleRestauration = hSalleRestauration;
+
+        }
+    }
+else
+    {
+    ShowMessage("Erreur fichier de configuration");
+    FP->Close();
+    }
 }
+
+//---------------------------------------------------------------------------
+
+void __fastcall TFP::ClientSocketHygrometrieConnect(TObject *Sender, TCustomWinSocket *Socket)
+    {
+    ClientSocketHygrometrie->Tag = 1;
+    if (Tag == 1)
+        Timer->Enabled = true;
+
+    ConnectAutomate->Caption = "Deconnexion Automate";
+    }
+//---------------------------------------------------------------------------
+
+void __fastcall TFP::ClientSocketHygrometrieDisconnect(TObject *Sender, TCustomWinSocket *Socket)
+    {
+    ClientSocketHygrometrie->Tag = 0;
+    Timer->Enabled = false;
+    ConnectAutomate->Caption = "Activer Connexion Automate";
+    }
 //---------------------------------------------------------------------------
 
 void __fastcall TFP::ConnectAutomateClick(TObject *Sender)
-{
-if (ClientSocketHygrometrie->Tag == 0)
     {
-    ClientSocketHygrometrie->Open();
+    if (ClientSocketHygrometrie->Tag == 0)
+        {
+        ClientSocketHygrometrie->Open();
+        }
+    else if (ClientSocketHygrometrie->Tag == 1)
+        {
+        ClientSocketHygrometrie->Close();
+        }
     }
-else if (ClientSocketHygrometrie->Tag == 1)
-    {
-    ClientSocketHygrometrie->Close();
-    }
-}
 //---------------------------------------------------------------------------
 
 void TFP::updateDonnees()
@@ -742,13 +981,12 @@ void TFP::updateDonnees()
 
 //---------------------------------------------------------------------------
 
-void __fastcall TFP::ClientSocketHygrometrieError(TObject *Sender,
-      TCustomWinSocket *Socket, TErrorEvent ErrorEvent, int &ErrorCode)
-{
-Timer->Enabled = false;
-ClientSocketHygrometrie->Close();
-ShowMessage("Erreur Client Socket Hygrometrie, Code d'erreur : " + ErrorCode);
-}
+void __fastcall TFP::ClientSocketHygrometrieError(TObject *Sender, TCustomWinSocket *Socket, TErrorEvent ErrorEvent, int &ErrorCode)
+    {
+    Timer->Enabled = false;
+    ClientSocketHygrometrie->Close();
+    ShowMessage("Erreur Client Socket Hygrometrie, Code d'erreur : " + ErrorCode);
+    }
 //---------------------------------------------------------------------------
 
 void __fastcall TFP::ConnecterBDDClick(TObject *Sender)
@@ -831,3 +1069,8 @@ bool TFP::estDansPlageFonctionnement(int zoneId)
     else
         return false;
     }
+
+
+//---------------------------------------------------------------------------
+
+

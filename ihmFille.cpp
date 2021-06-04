@@ -26,7 +26,7 @@ FP = (TFP *)Owner;
 zoneId = pzoneId;
 LabelZoneId->Caption = "Zone n°" + AnsiString(zoneId);
 volumeZone = pvolumeZone;
-LabelVolumeZone->Caption = "Volume de la zone : " + AnsiString(volumeZone) + " m3";
+LabelVolumeZone->Caption = "Volume de la zone : " + AnsiString((int)volumeZone) + " m3";
 
 GridPlageDeFonctionnement->Cells[0][0] = "Lundi";
 GridPlageDeFonctionnement->Cells[1][0] = "Mardi";

@@ -1,8 +1,8 @@
 object FP: TFP
-  Left = 338
-  Top = 147
-  Width = 1305
-  Height = 727
+  Left = 306
+  Top = 198
+  Width = 1304
+  Height = 706
   Caption = 'Application Exploitation Sur Site'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -69,6 +69,7 @@ object FP: TFP
   end
   object Timer: TTimer
     Enabled = False
+    Interval = 10000
     OnTimer = TimerTimer
     Left = 1256
   end
@@ -78,5 +79,9 @@ object FP: TFP
     ServerType = stNonBlocking
     OnClientRead = ServerSocketClientRead
     Left = 1160
+  end
+  object OpenDialog: TOpenDialog
+    Filter = 'nzl|*.nzl'
+    Left = 1128
   end
 end
